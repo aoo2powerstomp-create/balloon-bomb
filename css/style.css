@@ -32,6 +32,8 @@ html {
     position: relative;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
+    /* モバイルのツールバーを考慮した高さ */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -61,6 +63,8 @@ html {
     left: 0;
     width: 100%;
     height: 100%;
+    height: 100dvh;
+    /* 縦幅の安定化 */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -74,8 +78,6 @@ html {
 .scene.hidden {
     opacity: 0;
     pointer-events: none;
-    display: none;
-    /* 物理的に消す */
 }
 
 .scene.active {
@@ -86,6 +88,11 @@ html {
     /* アクティブなシーンのみクリックを受け付ける */
 }
 
+
+.hidden {
+    display: none !important;
+}
+
 /* HUD */
 #hud {
     position: absolute;
@@ -93,38 +100,194 @@ html {
     left: 0;
     width: 100%;
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 10px;
+    justify-content: space-between;
+    /* 均等割りを廃止し、カラムで制御 */
+    align-items: flex-start;
+    /* 垂直方向も要素ごとに制御 */
+    padding: 0 20px;
     font-weight: 800;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
     pointer-events: none;
 }
 
+.hud-column {
+    flex: 1;
+    /* 3等分 */
+    display: flex;
+    flex-direction: column;
+}
+
+#score-container {
+    align-items: flex-start;
+    padding-top: 15px;
+}
+
 .hud-item {
     font-size: clamp(14px, 4vw, 32px);
+    will-change: transform;
+}
+
+#combo-container {
+    align-items: center;
+    justify-content: flex-start;
+    height: 120px;
+    /* 十分なスペースを確保 */
+    position: relative;
+    padding-top: 5px;
 }
 
 #multiplier-display {
     font-size: clamp(24px, 6vw, 48px);
     font-weight: 900;
-    margin-right: 15px;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--secondary-color);
+    text-shadow: 0 0 10px var(--secondary-color);
+    display: inline-block;
+    will-change: transform;
+}
+
+#combo-info {
     display: inline-block;
 }
 
+.combo-jump-animate {
+    animation: combo-jump-rotate 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes combo-jump-rotate {
+    0% {
+        transform: translateY(0) rotate(0deg) scale(1.0);
+    }
+
+    30% {
+        transform: translateY(-20px) rotate(-10deg) scale(1.3);
+    }
+
+    100% {
+        transform: translateY(0) rotate(0deg) scale(1.0);
+    }
+}
+
 #combo-display {
-    font-size: clamp(14px, 4vw, 32px);
     font-weight: 700;
     opacity: 0.9;
+    color: var(--combo-color, #ffffff);
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    will-change: transform;
+}
+
+#combo-num {
+    font-size: clamp(14px, 4vw, 32px);
+}
+
+#combo-label {
+    font-size: 0.5em;
+    opacity: 0.7;
+}
+
+.combo-pop-animate {
+    animation: combo-count-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes combo-count-pop {
+    0% {
+        transform: scale(1.0);
+    }
+
+    50% {
+        transform: scale(var(--combo-scale, 1.2));
+    }
+
+    100% {
+        transform: scale(1.0);
+    }
+}
+
+#right-hud {
+    align-items: flex-end;
+    padding-top: 10px;
+    gap: 10px;
+}
+
+#stage-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.1;
+}
+
+#stage-label {
+    font-size: 0.6em;
+    opacity: 0.8;
+}
+
+#stage-number {
+    font-size: 1.2em;
+    font-weight: 900;
+    position: relative;
+    display: inline-block;
+    /* トランスフォームを安定させる */
+    will-change: transform, text-shadow;
+    /* アニメーションの最適化とレイアウト隔離 */
+}
+
+.glitch-animate {
+    animation: stage-glitch 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes stage-glitch {
+    0% {
+        transform: translate(0);
+        text-shadow: none;
+    }
+
+    20% {
+        transform: translate(-2px, 2px);
+        text-shadow: 2px 0 #ff2a6d, -2px 0 #05d9e8;
+    }
+
+    40% {
+        transform: translate(-2px, -2px);
+        text-shadow: 2px 0 #ff2a6d, -2px 0 #05d9e8;
+    }
+
+    60% {
+        transform: translate(2px, 2px);
+        text-shadow: -2px 0 #ff2a6d, 2px 0 #05d9e8;
+    }
+
+    80% {
+        transform: translate(2px, -2px);
+        text-shadow: -2px 0 #ff2a6d, 2px 0 #05d9e8;
+    }
+
+    100% {
+        transform: translate(0);
+        text-shadow: none;
+    }
 }
 
 .hp-heart {
     font-size: clamp(16px, 4vw, 28px);
-    color: #ff2a6d;
-    text-shadow: 0 0 10px rgba(255, 42, 109, 0.5);
     vertical-align: middle;
     white-space: nowrap;
+    display: inline-block;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    margin-left: 2px;
+}
+
+.hp-heart-filled {
+    color: #ff2a6d;
+    text-shadow: 0 0 10px rgba(255, 42, 109, 0.5);
+    opacity: 1;
+}
+
+.hp-heart-empty {
+    color: #ff2a6d;
+    opacity: 0.2;
+    /* 空のハートは薄く表示 */
+    text-shadow: none;
 }
 
 #hp-display {
@@ -371,6 +534,36 @@ html {
     display: none !important;
 }
 
+/* クレジット表記 */
+.credit-text {
+    position: absolute;
+    bottom: 25px;
+    /* モバイルを考慮して少し上げる */
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.8;
+    /* モバイルでの視認性を高めるため少し濃く */
+    color: #ffffff;
+    letter-spacing: 0.15em;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 9999;
+    /* 確実に最前面へ */
+}
+
+.thanks-text {
+    font-size: 18px;
+    opacity: 0.75;
+    color: #ffffff;
+    margin: 20px 0;
+    text-align: center;
+    font-weight: 500;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
     #hud {
@@ -381,5 +574,10 @@ html {
 
     .hud-item {
         margin: 2px 0;
+    }
+
+    #stage-display {
+        align-items: flex-end;
+        padding-right: 5px;
     }
 }

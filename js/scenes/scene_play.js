@@ -49,6 +49,7 @@ export class PlayScene extends SceneBase {
         this.entityManager.clear();
         this.popups = [];
         this.particles = []; // パーティクル配列
+        this.corePops = []; // コア放出エフェクト
         this.shakeTimer = 0; // 画面揺れ
         this.isGameOver = false;
         this.isTransitioning = false;
@@ -57,12 +58,16 @@ export class PlayScene extends SceneBase {
         // コンボ・倍率システム
         this.comboCount = 0;
         this.multiplierTier = 0;
-        this.missCooldown = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.feverGauge = 0;
+        this.isFever = false;
+        this.feverTime = 0;
 
-        // フィーバーシステム
-        this.feverTimer = 0;
-        this.feverActive = false;
-        this.lastFeverCombo = 0;
+        // 演出用
+        this.visualScore = 0; // 表示上のスコア（ロール用）
+        this.lastUpdateTime = 0;
+        this.lastStageIndex = -1; // ステージ変更検知用
 
         // プレイ統計トラッキング
         this.stats = {
@@ -74,10 +79,17 @@ export class PlayScene extends SceneBase {
         };
     }
 
-    onEnter() {
+    onEnter(noFade = false) {
         this.reset();
         this.hud.classList.remove('hidden');
         this.updateHUD();
+
+        // 背景切り替え（初回のみ即時、それ以降はクロスフェード）
+        if (noFade) {
+            this.engine.backgroundManager.setStage(this.stage.id);
+        } else {
+            this.engine.backgroundManager.transitionTo(this.stage.id);
+        }
     }
 
     onExit() {
@@ -85,17 +97,49 @@ export class PlayScene extends SceneBase {
     }
 
     updateHUD() {
-        this.scoreDisplay.textContent = `SCORE: ${String(this.score).padStart(6, '0')}`;
-        // HP表示
-        const hearts = '❤'.repeat(Math.max(0, this.hp));
-        this.hpDisplay.innerHTML = `HP: <span class="hp-heart">${hearts}</span>`;
-        this.stageDisplay.textContent = `STAGE: ${this.currentStageIndex + 1}`;
+        // スコア表示 (visualScoreを使用)
+        this.scoreDisplay.textContent = `SCORE: ${String(Math.floor(this.visualScore)).padStart(6, '0')}`;
+
+        const hpEl = document.getElementById('hp-display');
+        const maxHp = GAME_SETTINGS.MAX_HP || 5;
+        const currentHp = Math.max(0, this.hp);
+
+        if (hpEl) {
+            let hpHtml = 'HP: ';
+            for (let i = 0; i < maxHp; i++) {
+                if (i < currentHp) {
+                    hpHtml += '<span class="hp-heart hp-heart-filled">❤</span>';
+                } else {
+                    hpHtml += '<span class="hp-heart hp-heart-empty">❤</span>';
+                }
+            }
+            hpEl.innerHTML = hpHtml;
+        }
+
+        const stageNumEl = document.getElementById('stage-number');
+        if (stageNumEl) {
+            const currentStage = this.currentStageIndex + 1;
+            // ステージが変更された場合にグリッチ演出
+            if (this.lastStageIndex !== -1 && this.lastStageIndex !== this.currentStageIndex) {
+                stageNumEl.classList.remove('glitch-animate');
+                void stageNumEl.offsetWidth; // Reflow
+                stageNumEl.classList.add('glitch-animate');
+            }
+            stageNumEl.textContent = currentStage;
+            this.lastStageIndex = this.currentStageIndex;
+        }
 
         // コンボ・倍率表示
         const multipliers = [1.0, 1.2, 1.5, 2.0];
         const mult = multipliers[this.multiplierTier];
-        this.multiplierDisplay.textContent = `x${mult.toFixed(1)}`;
-        this.comboDisplay.textContent = `${this.comboCount} COMBO`;
+        if (this.multiplierDisplay) this.multiplierDisplay.textContent = `x${mult.toFixed(1)}`;
+
+        const comboDisplay = document.getElementById('combo-display');
+        const comboNumEl = document.getElementById('combo-num');
+        if (comboDisplay && comboNumEl) {
+            comboDisplay.classList.remove('hidden');
+            comboNumEl.textContent = this.comboCount;
+        }
 
         // Tierに応じたクラス付け替え
         this.multiplierDisplay.className = '';
@@ -108,7 +152,15 @@ export class PlayScene extends SceneBase {
     }
 
     update(delta) {
-        if (this.isGameOver) return;
+        if (this.isGameOver) {
+            if (this.gameOverTimer > 0) {
+                this.gameOverTimer -= delta * 1000;
+                if (this.gameOverTimer <= 0) {
+                    this.engine.changeScene('GAMEOVER');
+                }
+            }
+            return;
+        }
 
         // クールダウン
         if (this.missCooldown > 0) {
@@ -128,8 +180,17 @@ export class PlayScene extends SceneBase {
             this.shakeTimer -= delta;
         }
 
+        // スコアのロール更新 (Lerp or Step)
+        if (this.visualScore < this.score) {
+            const diff = this.score - this.visualScore;
+            const step = Math.ceil(diff * 0.15); // 残りの15%ずつ近づく
+            this.visualScore += step;
+            if (this.visualScore > this.score) this.visualScore = this.score;
+            this.updateHUD(); // スコアが変わるたびにHUD更新
+        }
+
         // 敵の更新
-        this.entityManager.update(delta);
+        this.entityManager.update(delta, this.isFever);
 
         // パーティクルの更新
         for (let i = this.particles.length - 1; i >= 0; i--) {
@@ -149,6 +210,18 @@ export class PlayScene extends SceneBase {
             p.vy += 0.5; // 重力
             p.life -= delta;
             if (p.life <= 0) this.popups.splice(i, 1);
+        }
+
+        // コア放出エフェクトの更新
+        for (let i = this.corePops.length - 1; i >= 0; i--) {
+            const p = this.corePops[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vx *= p.drag;
+            p.vy *= p.drag;
+            p.vy += p.gravity;
+            p.life -= delta * 1000;
+            if (p.life <= 0) this.corePops.splice(i, 1);
         }
 
         // スポーン処理
@@ -182,10 +255,6 @@ export class PlayScene extends SceneBase {
             ctx.translate((Math.random() - 0.5) * intensity, (Math.random() - 0.5) * intensity);
         }
 
-        // 背景の描画 (configのbgColorを使用)
-        ctx.fillStyle = this.stage.bgColor;
-        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-
         // 敵の描画
         this.entityManager.draw(ctx);
 
@@ -205,11 +274,63 @@ export class PlayScene extends SceneBase {
             ctx.fillText(p.text, p.x, p.y);
         });
 
+        // コア放出エフェクトの描画
+        this.corePops.forEach(p => {
+            const alpha = Math.min(1.0, p.life / 100);
+            const scale = 0.7 + (p.life / p.maxLife) * 0.3;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.translate(p.x, p.y);
+
+            if (p.life > p.maxLife - 80) { // 生成直後のみ発光
+                ctx.shadowBlur = p.type === 'star' ? 20 : 12;
+                ctx.shadowColor = "#ffffff";
+            }
+            ctx.fillStyle = "#ffffff";
+
+            if (p.type === 'shard') {
+                // 白用: 破片 (四角)
+                ctx.rotate(p.life * 0.05);
+                ctx.fillRect(-p.radius, -p.radius, p.radius * 2, p.radius * 2);
+            } else if (p.type === 'star') {
+                // 赤用: 星
+                const r = p.radius * scale;
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * r, Math.sin((18 + i * 72) * Math.PI / 180) * r);
+                    ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * (r * 0.4), Math.sin((54 + i * 72) * Math.PI / 180) * (r * 0.4));
+                }
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                // 標準: 円
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius * scale, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        });
+
         // ダメージフラッシュ演出
         if (this.flashTime > 0) {
             ctx.fillStyle = `rgba(255, 0, 0, ${this.flashTime * 0.5})`;
             ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
             this.flashTime -= 0.1; // 簡易的な減衰
+        }
+
+        // ゲームオーバー時のオーバーレイ
+        if (this.isGameOver) {
+            const alpha = Math.min(0.7, (3000 - this.gameOverTimer) / 1000);
+            ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+            ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+            ctx.fillStyle = "#ff0044";
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#ff0044";
+            ctx.font = "bold 80px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("GAME OVER", window.innerWidth / 2, window.innerHeight / 2);
         }
 
         ctx.restore();
@@ -235,6 +356,35 @@ export class PlayScene extends SceneBase {
                     if (killed) {
                         // コンボ・スコア加算
                         this.comboCount++;
+
+                        // コンボ演出（ジャンプ＋回転：倍率のみ）
+                        const multEl = document.getElementById('multiplier-display');
+                        if (multEl) {
+                            multEl.classList.remove('combo-jump-animate');
+                            void multEl.offsetWidth; // Reflow
+                            multEl.classList.add('combo-jump-animate');
+                        }
+
+                        // コンボ数演出（動的ポップ：色とサイズ）
+                        const comboDisplay = document.getElementById('combo-display');
+                        if (comboDisplay) {
+                            // 動的スケールの計算 (1.0 + min(combo/25, 1.0))
+                            const scale = 1.2 + Math.min(this.comboCount / 20, 1.2);
+
+                            // 動的カラーの計算
+                            let color = '#ffffff';
+                            if (this.comboCount >= 50) color = '#ffe066'; // 金
+                            else if (this.comboCount >= 30) color = '#ff2a6d'; // ピンク
+                            else if (this.comboCount >= 10) color = '#05d9e8'; // 水色
+
+                            comboDisplay.style.setProperty('--combo-scale', scale);
+                            comboDisplay.style.setProperty('--combo-color', color);
+
+                            comboDisplay.classList.remove('combo-pop-animate');
+                            void comboDisplay.offsetWidth; // Reflow
+                            comboDisplay.classList.add('combo-pop-animate');
+                        }
+
                         this.updateMultiplierTier();
                         this.checkFeverTrigger(); // フィーバー発動チェック
 
@@ -262,6 +412,11 @@ export class PlayScene extends SceneBase {
                             const scoreText = result.critical ? `CRITICAL! ${gain}` : `${gain}`;
                             const color = result.critical ? "255, 255, 0" : "255, 255, 255";
                             this.addPopup(result.x, result.y, scoreText, color);
+                        }
+
+                        // エネルギー体の場合はコア放出
+                        if (result.visualType === 'energy') {
+                            this.spawnCorePop(result.x, result.y, result.id);
                         }
                     }
                 } else {
@@ -371,15 +526,55 @@ export class PlayScene extends SceneBase {
         });
     }
 
+    spawnCorePop(x, y, id) {
+        const createPop = (angleOffset = 0, type = 'normal', rScale = 1.0, life = 400) => {
+            const angle = (Math.random() * 60 - 120 + angleOffset) * (Math.PI / 180);
+            const speed = (type === 'shard' ? 3.5 : 2.5) + Math.random() * 1.5;
+            this.corePops.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                gravity: (type === 'shard' ? 0.2 : 0.1),
+                drag: 0.98,
+                radius: (type === 'shard' ? 2 : 4 + Math.random() * 2) * rScale,
+                life: life,
+                maxLife: life,
+                type: type
+            });
+        };
+
+        if (id === 'splitter' || id === 'split_child') {
+            // 緑: 二股
+            createPop(-20);
+            createPop(20);
+        } else if (id === 'tough') {
+            // 白: コア + 破片
+            createPop(0);
+            for (let i = 0; i < 4; i++) createPop((i - 1.5) * 30, 'shard', 1.0, 300);
+        } else if (id === 'bonus') {
+            // 赤: コア + 星スパーク
+            createPop(0);
+            for (let i = 0; i < 5; i++) createPop(Math.random() * 360, 'star', 0.8, 500);
+        } else {
+            // 標準
+            createPop(0);
+        }
+    }
+
     nextStage() {
         this.currentStageIndex++;
         this.stage = STAGES[this.currentStageIndex];
         this.flashTime = 0.5; // ステージアップ演出のみ
+
+        // 背景クロスフェード切り替え
+        this.engine.backgroundManager.transitionTo(this.stage.id);
     }
 
     gameOver() {
+        if (this.isGameOver) return;
         this.isGameOver = true;
-        this.engine.changeScene('GAMEOVER');
+        this.gameOverTimer = 3000; // 3秒待機
+        console.log("[GAME OVER] Starting delay... results in 3s");
     }
 
     takeDamage(amount) {

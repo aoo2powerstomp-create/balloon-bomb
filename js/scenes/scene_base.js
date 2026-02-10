@@ -8,7 +8,7 @@ export class SceneBase {
     }
 
     /** シーン開始時 */
-    onEnter() { }
+    onEnter(noFade = false) { }
 
     /** シーン終了時 */
     onExit() { }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>バルーンボム（仮）- MVP</title>
+    <title>ENERGY CORE</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -19,27 +19,42 @@
             <div id="fever-alert" class="hidden">FEVER!</div>
             <!-- HUD -->
             <div id="hud" class="hidden">
-                <div class="hud-item" id="score-display">SCORE: 000000</div>
-                <div id="combo-container">
-                    <span id="multiplier-display">x1.0</span>
-                    <span id="combo-display">0 COMBO</span>
+                <div id="score-container" class="hud-column">
+                    <div class="hud-item" id="score-display">SCORE: 000000</div>
                 </div>
-                <div class="hud-item" id="hp-display">HP: ★★★</div>
-                <div class="hud-item" id="stage-display">STAGE: 1</div>
+
+                <div id="combo-container" class="hud-column">
+                    <div id="combo-info">
+                        <span id="multiplier-display">x1.0</span>
+                        <span id="combo-display">
+                            <span id="combo-num">0</span>
+                            <span id="combo-label">COMBO</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div id="right-hud" class="hud-column">
+                    <div class="hud-item" id="hp-display">HP: ★★★</div>
+                    <div class="hud-item" id="stage-display">
+                        <div id="stage-label">STAGE</div>
+                        <div id="stage-number">1</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Title Screen -->
             <div id="scene-title" class="scene active">
-                <h1 id="title-logo">BALLOON BOMB</h1>
+                <h1 id="title-logo">ENERGY CORE</h1>
                 <div id="high-score">HIGH SCORE: 0</div>
                 <button id="btn-start" class="btn-primary">START GAME</button>
+                <div class="credit-text">© 2026 t.o.b</div>
             </div>
 
             <!-- Game Over Screen -->
             <div id="scene-gameover" class="scene hidden">
                 <h2>GAME OVER</h2>
                 <div id="final-score">SCORE: 0</div>
-                <div id="player-title">称号: 算出中...</div>
+                <div id="player-title">称号: 観測中...</div>
                 <div id="new-record" class="hidden">NEW RECORD!</div>
 
                 <!-- プレイ統計表示 -->
@@ -52,14 +67,18 @@
                             id="stat-miss-taps">0</span></div>
                 </div>
 
+                <div class="thanks-text">Thanks for playing</div>
+
                 <div class="btn-group">
                     <button id="btn-retry" class="btn-primary">RETRY</button>
                     <button id="btn-to-title" class="btn-secondary">TITLE</button>
-                    <a id="btn-youtube" class="btn-secondary youtube-btn" href="https://www.youtube.com/@toxicoutbrain"
-                        target="_blank" rel="noopener noreferrer">YOUTUBE</a>
+                    <a id="btn-youtube" class="btn-secondary youtube-btn hidden"
+                        href="https://www.youtube.com/@toxicoutbrain" target="_blank"
+                        rel="noopener noreferrer">YOUTUBE</a>
                 </div>
             </div>
         </div>
+
 
         <!-- Debug HUD -->
         <div id="debug-hud">

@@ -16,7 +16,7 @@ export class EntityManager {
         this.entities = [];
     }
 
-    spawn(weights, x = null, y = null) {
+    spawn(weights, x = null, y = null, options = {}) {
         let selectedId;
 
         if (typeof weights === 'string') {
@@ -42,7 +42,7 @@ export class EntityManager {
         const finalX = x !== null ? x : Math.random() * (window.innerWidth - config.radius * 2) + config.radius;
         const finalY = y !== null ? y : Math.random() * (window.innerHeight - config.radius * 2) + config.radius;
 
-        const enemy = new Enemy(config, finalX, finalY);
+        const enemy = new Enemy(config, finalX, finalY, options);
         this.entities.push(enemy);
     }
 
@@ -63,8 +63,12 @@ export class EntityManager {
                 // 分裂スポーン処理
                 const spawnConfig = entity.config.onDeathSpawn;
                 if (spawnConfig) {
-                    for (let k = 0; k < spawnConfig.count; k++) {
-                        this.spawn(spawnConfig.id, entity.x, entity.y);
+                    const count = spawnConfig.count || 1;
+                    const startAngle = Math.random() * Math.PI * 2;
+                    for (let k = 0; k < count; k++) {
+                        // 複数の場合は角度を均等に分散（2体なら180度反対）
+                        const angle = startAngle + (Math.PI * 2 / count) * k;
+                        this.spawn(spawnConfig.id, entity.x, entity.y, { angle: angle });
                     }
                 }
                 this.entities.splice(i, 1);
@@ -99,7 +103,9 @@ export class EntityManager {
                     recovery: killed ? (entity.config.recovery || 0) : 0,
                     x: entity.x,
                     y: entity.y,
-                    color: entity.config.color
+                    color: entity.config.color,
+                    visualType: entity.config.visualType,
+                    id: entity.id
                 };
             }
         }

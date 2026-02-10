@@ -15,12 +15,15 @@ export class TitleScene extends SceneBase {
         };
     }
 
-    onEnter() {
+    onEnter(noFade = false) {
         this.domElement.classList.add('active');
         this.domElement.classList.remove('hidden');
 
-        // ハイスコア表示等の更新
-        const highScore = localStorage.getItem('balloon_high_score') || 0;
+        // 背景設定 (タイトルは即時またはフェードなし)
+        this.engine.backgroundManager.setTitle();
+
+        // ハイスコア表示等の更新（新キー優先で取得）
+        const highScore = localStorage.getItem('energy_core_high_score') || localStorage.getItem('balloon_high_score') || 0;
         document.getElementById('high-score').textContent = `HIGH SCORE: ${highScore}`;
     }
 

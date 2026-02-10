@@ -31,8 +31,25 @@ export const ENEMY_TYPES = {
         radius: 35,
         color: '#05d9e8',
         inflateColor: '#ff2a6d',
+        visualType: 'energy',
+        energyParams: {
+            coreRadius: 8,
+            shellRadius: 35,
+            pulseSpeed: 0.005,
+            safeColor: "#3ccfff",
+            dangerColor: "#ff3366",
+            spark: {
+                enabled: true,
+                rateMove: 1.0,
+                rateInflate: 3.5,
+                lifeMsMin: 60,
+                lifeMsMax: 120,
+                maxAlive: 3
+            }
+        },
         movePattern: 'straight',
         durations: {
+            spawn: 250,
             move: 2000,
             stop: 1000,
             inflate: 2000
@@ -47,8 +64,25 @@ export const ENEMY_TYPES = {
         radius: 50,
         color: '#f9f9f9',
         inflateColor: '#ff2a6d',
+        visualType: 'energy',
+        energyParams: {
+            coreRadius: 10,
+            shellRadius: 50,
+            pulseSpeed: 0.005,
+            safeColor: "#f9f9f9",
+            dangerColor: "#ff3366",
+            spark: {
+                enabled: true,
+                rateMove: 1.0,
+                rateInflate: 3.5,
+                lifeMsMin: 60,
+                lifeMsMax: 120,
+                maxAlive: 3
+            }
+        },
         movePattern: 'zigzag',
         durations: {
+            spawn: 250,
             move: 3000,
             stop: 1500,
             inflate: 2500
@@ -63,8 +97,25 @@ export const ENEMY_TYPES = {
         radius: 25,
         color: '#ffe066',
         inflateColor: '#ff2a6d',
+        visualType: 'energy',
+        energyParams: {
+            coreRadius: 6,
+            shellRadius: 25,
+            pulseSpeed: 0.005,
+            safeColor: "#ffe066",
+            dangerColor: "#ff3366",
+            spark: {
+                enabled: true,
+                rateMove: 1.0,
+                rateInflate: 3.5,
+                lifeMsMin: 60,
+                lifeMsMax: 120,
+                maxAlive: 3
+            }
+        },
         movePattern: 'sine',
         durations: {
+            spawn: 250,
             move: 1500,
             stop: 500,
             inflate: 1000
@@ -79,8 +130,25 @@ export const ENEMY_TYPES = {
         radius: 32,
         color: '#ff00ff', // 紫
         inflateColor: '#ff2a6d',
+        visualType: 'energy',
+        energyParams: {
+            coreRadius: 7,
+            shellRadius: 32,
+            pulseSpeed: 0.005,
+            safeColor: "#ff00ff",
+            dangerColor: "#ff3366",
+            spark: {
+                enabled: true,
+                rateMove: 1.0,
+                rateInflate: 3.5,
+                lifeMsMin: 60,
+                lifeMsMax: 120,
+                maxAlive: 3
+            }
+        },
         movePattern: 'straight',
         durations: {
+            spawn: 250,
             move: 1200,
             stop: 400,
             inflate: 800 // せっかち！
@@ -95,15 +163,32 @@ export const ENEMY_TYPES = {
         radius: 40,
         color: '#00ff00', // 緑
         inflateColor: '#ff2a6d',
+        visualType: 'energy',
+        energyParams: {
+            coreRadius: 9,
+            shellRadius: 40,
+            pulseSpeed: 0.005,
+            safeColor: "#00ff00",
+            dangerColor: "#ff3366",
+            spark: {
+                enabled: true,
+                rateMove: 1.0,
+                rateInflate: 3.5,
+                lifeMsMin: 60,
+                lifeMsMax: 120,
+                maxAlive: 3
+            }
+        },
         movePattern: 'straight',
         durations: {
+            spawn: 250,
             move: 2000,
             stop: 1000,
             inflate: 2500
         },
         speed: 80,
         explodeDamage: 1,
-        onDeathSpawn: { id: 'split_child', count: 1 }
+        onDeathSpawn: { id: 'split_child', count: 2 }
     },
     split_child: {
         id: 'split_child',
@@ -112,13 +197,30 @@ export const ENEMY_TYPES = {
         radius: 22,
         color: '#7cfc00', // 薄緑
         inflateColor: '#ff2a6d',
+        visualType: 'energy',
+        energyParams: {
+            coreRadius: 5,
+            shellRadius: 22,
+            pulseSpeed: 0.005,
+            safeColor: "#7cfc00",
+            dangerColor: "#ff3366",
+            spark: {
+                enabled: true,
+                rateMove: 1.0,
+                rateInflate: 3.5,
+                lifeMsMin: 60,
+                lifeMsMax: 120,
+                maxAlive: 3
+            }
+        },
         movePattern: 'straight',
         durations: {
+            spawn: 250,
             move: 1000,
             stop: 300,
             inflate: 600
         },
-        speed: 200,
+        speed: 300,
         explodeDamage: 1
     },
     heart: {
@@ -132,6 +234,7 @@ export const ENEMY_TYPES = {
         inflateColor: '#ff2a6d',
         movePattern: 'straight',
         durations: {
+            spawn: 250,
             move: 3000,
             stop: 0,
             inflate: 0
@@ -146,8 +249,25 @@ export const ENEMY_TYPES = {
         score: 3000,
         radius: 6,
         color: '#ff0000', // 真っ赤な〇
+        visualType: 'energy',
+        energyParams: {
+            coreRadius: 3,
+            shellRadius: 10,
+            pulseSpeed: 0.005,
+            safeColor: "#ff0000",
+            dangerColor: "#ff3366",
+            spark: {
+                enabled: true,
+                rateMove: 1.5, // 赤は少し活動的に
+                rateInflate: 4.0,
+                lifeMsMin: 50,
+                lifeMsMax: 100,
+                maxAlive: 2
+            }
+        },
         movePattern: 'tricky',
         durations: {
+            spawn: 250,
             move: 4000,
             stop: 0,
             inflate: 0
