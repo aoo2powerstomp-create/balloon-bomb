@@ -65,6 +65,7 @@ html {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    text-align: center;
     transition: opacity 0.3s ease;
     pointer-events: none;
     /* 非アクティブ時はクリックを透過 */
@@ -171,6 +172,8 @@ html {
 /* UI Elements */
 #title-logo {
     font-size: 4rem;
+    text-align: center;
+    width: 100%;
     margin-bottom: 20px;
     letter-spacing: 5px;
     color: var(--secondary-color);
@@ -274,6 +277,8 @@ html {
 
 /* Debug HUD */
 #debug-hud {
+    display: none;
+    /* 非表示に設定 */
     position: absolute;
     bottom: 50px;
     /* 10px から引き上げ */

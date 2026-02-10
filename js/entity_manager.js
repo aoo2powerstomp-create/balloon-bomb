@@ -83,9 +83,10 @@ export class EntityManager {
         // 背面の敵から判定するため逆順にループ（重なり考慮）
         for (let i = this.entities.length - 1; i >= 0; i--) {
             const entity = this.entities[i];
+            const hitRadius = entity.getCurrentRadius() + (entity.config.isItem ? 25 : 0) + 10;
 
             // 判定は外部の純粋関数を使用
-            if (isHit(inputPos, { x: entity.x, y: entity.y, radius: entity.getCurrentRadius() }, padding)) {
+            if (isHit(inputPos, { x: entity.x, y: entity.y, radius: hitRadius }, padding)) {
                 const critical = isCritical(entity.state, entity.getStateProgress());
                 const killed = entity.onHit(critical, this.scene.feverActive);
 

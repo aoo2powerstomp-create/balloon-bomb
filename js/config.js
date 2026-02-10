@@ -127,7 +127,7 @@ export const ENEMY_TYPES = {
         isItem: true,
         recovery: 1,
         score: 50,
-        radius: 12,
+        radius: 18,
         color: '#ff85a2',
         inflateColor: '#ff2a6d',
         movePattern: 'straight',
@@ -138,53 +138,84 @@ export const ENEMY_TYPES = {
         },
         speed: 450,
         explodeDamage: 0
+    },
+    bonus: {
+        id: 'bonus',
+        hp: 2,
+        isItem: true,
+        score: 3000,
+        radius: 6,
+        color: '#ff0000', // 真っ赤な〇
+        movePattern: 'tricky',
+        durations: {
+            move: 4000,
+            stop: 0,
+            inflate: 0
+        },
+        speed: 550,
+        explodeDamage: 0
     }
 };
 
 export const STAGES = [
     {
-        id: 1,
-        name: "Stage 1: Entrance",
-        targetScore: 1000,
-        spawnInterval: 1800,
-        maxAlive: 8,
-        weights: { basic: 80, tough: 10, fast: 10, heart: 5 },
+        id: 1, name: "Stage 1: Entrance",
+        targetScore: 1000, spawnInterval: 1800, maxAlive: 8,
+        weights: { basic: 84, tough: 10, heart: 5, bonus: 1 },
         bgColor: '#1a1a2e'
     },
     {
-        id: 2,
-        name: "Stage 2: Pressure Zone",
-        targetScore: 3500,
-        spawnInterval: 1400,
-        maxAlive: 12,
-        weights: { basic: 40, tough: 25, fast: 20, hasty: 15, heart: 2 },
+        id: 2, name: "Stage 2: Fast React",
+        targetScore: 3000, spawnInterval: 1500, maxAlive: 10,
+        weights: { basic: 59, tough: 20, fast: 15, hasty: 5, heart: 4, bonus: 1 },
         bgColor: '#16213e'
     },
     {
-        id: 3,
-        name: "Stage 3: Zigzag Chaos",
-        targetScore: 7000,
-        spawnInterval: 1000,
-        maxAlive: 15,
-        weights: { basic: 25, tough: 30, fast: 25, hasty: 15, splitter: 10, heart: 2 },
+        id: 3, name: "Stage 3: Pressure",
+        targetScore: 6000, spawnInterval: 1300, maxAlive: 12,
+        weights: { basic: 41, tough: 30, fast: 20, hasty: 15, heart: 3, bonus: 1 },
         bgColor: '#0f3460'
     },
     {
-        id: 4,
-        name: "Stage 4: Sine Hell",
-        targetScore: 12000,
-        spawnInterval: 800,
-        maxAlive: 18,
-        weights: { basic: 15, tough: 25, fast: 40, hasty: 20, splitter: 15, heart: 3 },
-        bgColor: '#1a1a2e'
+        id: 4, name: "Stage 4: Multiplying",
+        targetScore: 10000, spawnInterval: 1100, maxAlive: 14,
+        weights: { basic: 31, tough: 30, fast: 20, hasty: 15, splitter: 10, heart: 3, bonus: 1 },
+        bgColor: '#1a1a40'
     },
     {
-        id: 5,
-        name: "Stage 5: Ultimate Void",
-        targetScore: 999999, // Endless
-        spawnInterval: 600,
-        maxAlive: 20,
-        weights: { basic: 10, tough: 30, fast: 40, hasty: 25, splitter: 20, heart: 4 },
-        bgColor: '#16213e'
+        id: 5, name: "Stage 5: Panic Zone",
+        targetScore: 16000, spawnInterval: 950, maxAlive: 16,
+        weights: { tough: 38, fast: 30, hasty: 20, splitter: 15, heart: 3, bonus: 1 },
+        bgColor: '#2a1a40'
+    },
+    {
+        id: 6, name: "Stage 6: Speed Demon",
+        targetScore: 23000, spawnInterval: 850, maxAlive: 18,
+        weights: { tough: 34, fast: 40, hasty: 25, splitter: 20, heart: 4, bonus: 1 },
+        bgColor: '#401a40'
+    },
+    {
+        id: 7, name: "Stage 7: Chaos Bloom",
+        targetScore: 32000, spawnInterval: 750, maxAlive: 20,
+        weights: { tough: 29, fast: 45, hasty: 30, splitter: 25, heart: 5, bonus: 1 },
+        bgColor: '#401a2a'
+    },
+    {
+        id: 8, name: "Stage 8: Heavy Rain",
+        targetScore: 45000, spawnInterval: 650, maxAlive: 22,
+        weights: { tough: 25, fast: 50, hasty: 40, splitter: 30, heart: 6, bonus: 1 },
+        bgColor: '#401a1a'
+    },
+    {
+        id: 9, name: "Stage 9: Final Wall",
+        targetScore: 60000, spawnInterval: 550, maxAlive: 25,
+        weights: { tough: 21, fast: 60, hasty: 50, splitter: 35, heart: 8, bonus: 1 },
+        bgColor: '#2a0a0a'
+    },
+    {
+        id: 10, name: "Stage 10: Ultimate Void",
+        targetScore: 999999, spawnInterval: 450, maxAlive: 30,
+        weights: { tough: 17, fast: 70, hasty: 60, splitter: 45, heart: 10, bonus: 1 },
+        bgColor: '#000000'
     }
 ];

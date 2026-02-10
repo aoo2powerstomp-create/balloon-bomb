@@ -45,7 +45,7 @@ export class Enemy {
 
         switch (this.state) {
             case 'SPAWN':
-                if (this.stateTime > 500) this.transition('MOVE');
+                if (this.stateTime > 250) this.transition('MOVE');
                 break;
 
             case 'MOVE':
@@ -58,6 +58,40 @@ export class Enemy {
                     const offset = Math.sin(time) * 3;
                     this.x += (this.vx * delta) + (perpX / (this.config.speed || 1)) * offset;
                     this.y += (this.vy * delta) + (perpY / (this.config.speed || 1)) * offset;
+                } else if (pattern === 'tricky') {
+                    // トリッキーな動き: 「静」と「動（ランダムバリエーション）」を繰り返す
+                    const cycle = 1500;
+                    const phase = Date.now() % cycle;
+
+                    if (phase < 600) {
+                        // 停止フェーズ
+                        this.vx *= 0.8;
+                        this.vy *= 0.8;
+                    } else if (phase < 700) {
+                        // ダッシュ準備: 次の動きを決定
+                        if (!this._dashInit) {
+                            const angle = Math.random() * Math.PI * 2;
+                            this._dashType = Math.floor(Math.random() * 3); // 0:直線, 1:波形, 2:不規則
+                            this.vx = Math.cos(angle) * (this.config.speed * 1.5);
+                            this.vy = Math.sin(angle) * (this.config.speed * 1.5);
+                            this._dashInit = true;
+                        }
+                    } else {
+                        // ダッシュフェーズ: タイプ別挙動
+                        this._dashInit = false;
+                        if (this._dashType === 1) {
+                            // サイン波ダッシュ
+                            const time = Date.now() * 0.02;
+                            this.x += Math.sin(time) * 5;
+                        } else if (this._dashType === 2) {
+                            // 不規則な揺らぎ
+                            this.vx += (Math.random() - 0.5) * 50;
+                            this.vy += (Math.random() - 0.5) * 50;
+                        }
+                    }
+
+                    this.x += this.vx * delta;
+                    this.y += this.vy * delta;
                 } else if (pattern === 'zigzag') {
                     if (Math.floor(this.stateTime / 400) % 2 === 0) {
                         this.x += this.vx * delta;
@@ -102,24 +136,22 @@ export class Enemy {
      * 現在の表示上の半径を返す（判定と描画用）
      */
     getCurrentRadius() {
-        // アイテムは判定を広げる
-        const baseRadius = this.config.isItem ? this.radius + 25 : this.radius;
+        const baseRadius = this.radius;
         const progress = this.getStateProgress();
         let displayRadius = baseRadius;
 
         if (this.state === 'SPAWN') {
-            displayRadius *= (this.stateTime / 500);
+            displayRadius *= (this.stateTime / 250);
         } else if (this.state === 'INFLATE') {
             displayRadius *= (1.0 + progress * 0.5);
         }
 
-        // スケール変更と当たり判定用バッファ
-        return (displayRadius + 10) * this.scale;
+        return displayRadius * this.scale;
     }
 
     draw(ctx) {
         const progress = this.getStateProgress();
-        const displayRadius = (this.getCurrentRadius() / this.scale) - 10;
+        const displayRadius = this.getCurrentRadius() / this.scale;
         let color = this.config.color;
 
         ctx.save();
@@ -155,12 +187,6 @@ export class Enemy {
             ctx.stroke();
         }
 
-        if (this.config.hp > 1 && !this.config.isItem) {
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 18px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(this.hp, 0, 6);
-        }
         ctx.restore();
     }
 
