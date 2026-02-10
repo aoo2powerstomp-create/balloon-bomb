@@ -220,8 +220,19 @@ html {
 }
 
 #final-score {
-    font-size: 3rem;
-    margin-bottom: 10px;
+    font-size: 2.8rem;
+    color: #4df;
+    text-shadow: 0 0 10px #4df;
+    margin-bottom: 5px;
+}
+
+#player-title {
+    font-size: 1.8rem;
+    color: #ffe066;
+    text-shadow: 0 0 15px rgba(255, 224, 102, 0.8);
+    margin: 15px 0;
+    font-weight: bold;
+    letter-spacing: 2px;
 }
 
 #statistics-container {
