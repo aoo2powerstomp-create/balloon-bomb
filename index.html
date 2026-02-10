@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バルーンボム（仮）- MVP</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- Canvas Layer -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- UI Layout Area -->
+        <div id="ui-layer">
+            <div id="fever-overlay"></div>
+            <div id="fever-alert" class="hidden">FEVER!</div>
+            <!-- HUD -->
+            <div id="hud" class="hidden">
+                <div class="hud-item" id="score-display">SCORE: 000000</div>
+                <div id="combo-container">
+                    <span id="multiplier-display">x1.0</span>
+                    <span id="combo-display">0 COMBO</span>
+                </div>
+                <div class="hud-item" id="hp-display">HP: ★★★</div>
+                <div class="hud-item" id="stage-display">STAGE: 1</div>
+            </div>
+
+            <!-- Title Screen -->
+            <div id="scene-title" class="scene active">
+                <h1 id="title-logo">BALLOON BOMB</h1>
+                <div id="high-score">HIGH SCORE: 0</div>
+                <button id="btn-start" class="btn-primary">START GAME</button>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="scene-gameover" class="scene hidden">
+                <h2>GAME OVER</h2>
+                <div id="final-score">SCORE: 0</div>
+                <div id="new-record" class="hidden">NEW RECORD!</div>
+
+                <!-- プレイ統計表示 -->
+                <div id="statistics-container">
+                    <div class="stat-row">総タップ数: <span id="stat-total-taps">0</span></div>
+                    <div class="stat-row">最大コンボ: <span id="stat-max-combo">0</span></div>
+                    <div class="stat-row">フィーバー回数: <span id="stat-fever-count">0</span></div>
+                    <div class="stat-row">ミス率: <span id="stat-miss-rate">0.0</span>%</div>
+                    <div class="stat-detail">HIT: <span id="stat-hit-taps">0</span> / MISS: <span
+                            id="stat-miss-taps">0</span></div>
+                </div>
+
+                <div class="btn-group">
+                    <button id="btn-retry" class="btn-primary">RETRY</button>
+                    <button id="btn-to-title" class="btn-secondary">TITLE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug HUD -->
+        <div id="debug-hud">
+            FPS: <span id="debug-fps">0</span><br>
+            ALIVE: <span id="debug-alive">0</span><br>
+            LAST EVENT: <span id="debug-event">NONE</span><br>
+            SCENE: <span id="debug-scene">NONE</span><br>
+            <button id="debug-fever-btn"
+                style="pointer-events: auto; cursor: pointer; margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #ff2a6d; color: white; border: none; border-radius: 3px;">FEVER-1</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/engine.js"></script>
+</body>
+
+</html>
