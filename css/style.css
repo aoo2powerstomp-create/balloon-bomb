@@ -265,6 +265,24 @@ html {
     animation: blink 0.5s infinite alternate;
 }
 
+#btn-youtube {
+    background-color: #ff0000;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+    border: 2px solid #ffffff;
+    margin-top: 20px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#btn-youtube:hover {
+    background-color: #cc0000;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+}
+
 @keyframes blink {
     from {
         opacity: 1;

@@ -10,9 +10,11 @@ export class GameOverScene extends SceneBase {
         this.domElement = document.getElementById('scene-gameover');
         this.btnRetry = document.getElementById('btn-retry');
         this.btnToTitle = document.getElementById('btn-to-title');
+        this.btnYoutube = document.getElementById('btn-youtube');
 
         this.btnRetry.onclick = () => this.engine.changeScene('PLAY');
         this.btnToTitle.onclick = () => this.engine.changeScene('TITLE');
+        this.btnYoutube.onclick = (e) => e.stopPropagation();
     }
 
     onEnter() {

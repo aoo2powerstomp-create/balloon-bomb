@@ -219,3 +219,6 @@ export const STAGES = [
         bgColor: '#000000'
     }
 ];
+export const EXTERNAL_LINKS = {
+    YOUTUBE: "https://www.youtube.com/@toxicoutbrain"
+};
