@@ -128,7 +128,8 @@ export class Enemy {
 
         if (this.state === 'INFLATE') {
             if (progress > 0.8) {
-                const flicker = Math.sin(Date.now() * 0.05) > 0;
+                const flickerSpeed = 100 / (this.config.durations.inflate || 1000);
+                const flicker = Math.sin(Date.now() * flickerSpeed) > 0;
                 color = flicker ? '#ffffff' : this.config.inflateColor;
             } else {
                 color = this.config.inflateColor;

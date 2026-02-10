@@ -72,6 +72,55 @@ export const ENEMY_TYPES = {
         speed: 250,
         explodeDamage: 1
     },
+    hasty: {
+        id: 'hasty',
+        hp: 1,
+        score: 150,
+        radius: 32,
+        color: '#ff00ff', // 紫
+        inflateColor: '#ff2a6d',
+        movePattern: 'straight',
+        durations: {
+            move: 1200,
+            stop: 400,
+            inflate: 800 // せっかち！
+        },
+        speed: 160,
+        explodeDamage: 1
+    },
+    splitter: {
+        id: 'splitter',
+        hp: 1,
+        score: 80,
+        radius: 40,
+        color: '#00ff00', // 緑
+        inflateColor: '#ff2a6d',
+        movePattern: 'straight',
+        durations: {
+            move: 2000,
+            stop: 1000,
+            inflate: 2500
+        },
+        speed: 80,
+        explodeDamage: 1,
+        onDeathSpawn: { id: 'split_child', count: 1 }
+    },
+    split_child: {
+        id: 'split_child',
+        hp: 1,
+        score: 40,
+        radius: 22,
+        color: '#7cfc00', // 薄緑
+        inflateColor: '#ff2a6d',
+        movePattern: 'straight',
+        durations: {
+            move: 1000,
+            stop: 300,
+            inflate: 600
+        },
+        speed: 200,
+        explodeDamage: 1
+    },
     heart: {
         id: 'heart',
         hp: 1, // 消えないバグを修正
@@ -108,7 +157,7 @@ export const STAGES = [
         targetScore: 3500,
         spawnInterval: 1400,
         maxAlive: 12,
-        weights: { basic: 50, tough: 30, fast: 20, heart: 2 },
+        weights: { basic: 40, tough: 25, fast: 20, hasty: 15, heart: 2 },
         bgColor: '#16213e'
     },
     {
@@ -117,7 +166,7 @@ export const STAGES = [
         targetScore: 7000,
         spawnInterval: 1000,
         maxAlive: 15,
-        weights: { basic: 30, tough: 40, fast: 30, heart: 2 },
+        weights: { basic: 25, tough: 30, fast: 25, hasty: 15, splitter: 10, heart: 2 },
         bgColor: '#0f3460'
     },
     {
@@ -126,7 +175,7 @@ export const STAGES = [
         targetScore: 12000,
         spawnInterval: 800,
         maxAlive: 18,
-        weights: { basic: 20, tough: 30, fast: 50, heart: 3 },
+        weights: { basic: 15, tough: 25, fast: 40, hasty: 20, splitter: 15, heart: 3 },
         bgColor: '#1a1a2e'
     },
     {
@@ -135,7 +184,7 @@ export const STAGES = [
         targetScore: 999999, // Endless
         spawnInterval: 600,
         maxAlive: 20,
-        weights: { basic: 10, tough: 40, fast: 50, heart: 4 },
+        weights: { basic: 10, tough: 30, fast: 40, hasty: 25, splitter: 20, heart: 4 },
         bgColor: '#16213e'
     }
 ];

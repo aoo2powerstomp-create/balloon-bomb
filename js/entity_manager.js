@@ -16,28 +16,33 @@ export class EntityManager {
         this.entities = [];
     }
 
-    spawn(weights) {
-        // 重み付きランダムで敵タイプを選択
-        const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
-        let random = Math.random() * totalWeight;
-        let selectedId = 'basic';
+    spawn(weights, x = null, y = null) {
+        let selectedId;
 
-        for (const [id, weight] of Object.entries(weights)) {
-            if (random < weight) {
-                selectedId = id;
-                break;
+        if (typeof weights === 'string') {
+            selectedId = weights;
+        } else {
+            // 重み付きランダムで敵タイプを選択
+            const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            selectedId = 'basic';
+
+            for (const [id, weight] of Object.entries(weights)) {
+                if (random < weight) {
+                    selectedId = id;
+                    break;
+                }
+                random -= weight;
             }
-            random -= weight;
         }
 
         const config = ENEMY_TYPES[selectedId];
-        const canvas = this.scene.engine.canvas;
 
-        // 画面端から出現させる（簡易的にランダム位置）
-        const x = Math.random() * (window.innerWidth - config.radius * 2) + config.radius;
-        const y = Math.random() * (window.innerHeight - config.radius * 2) + config.radius;
+        // 座標指定がない場合はランダム位置
+        const finalX = x !== null ? x : Math.random() * (window.innerWidth - config.radius * 2) + config.radius;
+        const finalY = y !== null ? y : Math.random() * (window.innerHeight - config.radius * 2) + config.radius;
 
-        const enemy = new Enemy(config, x, y);
+        const enemy = new Enemy(config, finalX, finalY);
         this.entities.push(enemy);
     }
 
@@ -55,6 +60,13 @@ export class EntityManager {
 
             // 死亡/消滅チェック
             if (entity.state === 'DEAD') {
+                // 分裂スポーン処理
+                const spawnConfig = entity.config.onDeathSpawn;
+                if (spawnConfig) {
+                    for (let k = 0; k < spawnConfig.count; k++) {
+                        this.spawn(spawnConfig.id, entity.x, entity.y);
+                    }
+                }
                 this.entities.splice(i, 1);
             }
         }
