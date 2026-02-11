@@ -7,7 +7,7 @@ import { TitleScene } from './scenes/scene_title.js';
 import { PlayScene } from './scenes/scene_play.js';
 import { GameOverScene } from './scenes/scene_gameover.js';
 import { BackgroundManager } from './background_manager.js';
-import { GAME_SETTINGS } from './config.js';
+import { audioManager } from './audio_manager.js';
 
 class GameEngine {
     constructor() {
@@ -20,6 +20,10 @@ class GameEngine {
 
         this.lastTime = 0;
         this.isRunning = false;
+
+        // オーディオリソースのプリロード開始（非同期）
+        audioManager.preload();
+        this.audioUnlocked = false;
 
         // UI要素
         this.debugFps = document.getElementById('debug-fps');
@@ -40,7 +44,19 @@ class GameEngine {
         };
 
         // 入力イベントの登録 (Pointer Eventsでマウス/タッチを統合)
-        this.canvas.addEventListener('pointerdown', (e) => this.handleInput('pointerdown', e));
+        this.canvas.addEventListener('pointerdown', (e) => {
+            // 初回操作でオーディオをアンロック
+            if (!this.audioUnlocked) {
+                audioManager.unlock().then(() => {
+                    this.audioUnlocked = true;
+                    // アンロック直後にBGMを開始させるためのチェック（タイトル等）
+                    if (this.currentScene && this.currentScene.onAudioUnlocked) {
+                        this.currentScene.onAudioUnlocked();
+                    }
+                });
+            }
+            this.handleInput('pointerdown', e);
+        });
 
         // タッチ時のスクロール等のデフォルト動作を防止
         this.canvas.style.touchAction = 'none';

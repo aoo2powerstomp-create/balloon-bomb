@@ -4,6 +4,7 @@
  */
 import { SceneBase } from './scene_base.js';
 import { sendGAEvent } from '../ga_util.js';
+import { audioManager } from '../audio_manager.js';
 
 export class GameOverScene extends SceneBase {
     constructor(engine) {
@@ -13,14 +14,24 @@ export class GameOverScene extends SceneBase {
         this.btnToTitle = document.getElementById('btn-to-title');
         this.btnYoutube = document.getElementById('btn-youtube');
 
-        this.btnRetry.onclick = () => this.engine.changeScene('PLAY');
-        this.btnToTitle.onclick = () => this.engine.changeScene('TITLE');
+        this.btnRetry.onclick = () => {
+            audioManager.playSe('select');
+            this.engine.changeScene('PLAY');
+        };
+        this.btnToTitle.onclick = () => {
+            audioManager.playSe('select');
+            this.engine.changeScene('TITLE');
+        };
         this.btnYoutube.onclick = (e) => e.stopPropagation();
     }
 
     onEnter(noFade = false) {
         this.domElement.classList.add('active');
         this.domElement.classList.remove('hidden');
+
+        // BGM停止とSE
+        audioManager.stopBgm({ fade: 0.5 });
+        audioManager.playSe('gameover');
 
         // スコア表示
         const playScene = this.engine.scenes.PLAY;

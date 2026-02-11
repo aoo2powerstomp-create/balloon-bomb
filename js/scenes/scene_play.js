@@ -6,7 +6,7 @@ import { SceneBase } from './scene_base.js';
 import { EntityManager } from '../entity_manager.js';
 import { STAGES, GAME_SETTINGS, FEVER_SETTINGS, COMBO_SETTINGS, GUARD_SETTINGS, BOMB_SETTINGS } from '../config.js';
 
-import { sfx } from '../sfx.js';
+import { audioManager } from '../audio_manager.js';
 import { sendGAEvent } from '../ga_util.js';
 
 export class PlayScene extends SceneBase {
@@ -32,7 +32,7 @@ export class PlayScene extends SceneBase {
                 this.comboCount = 19;
                 this.updateMultiplierTier();
                 this.updateHUD();
-                sfx.play('hit');
+                audioManager.playSe('hit');
                 console.log("[DEBUG] Combo set to 19");
             });
         }
@@ -44,7 +44,7 @@ export class PlayScene extends SceneBase {
                 if (this.isGameOver) return;
                 this.guardCharge = Math.min(GUARD_SETTINGS.maxCharges, this.guardCharge + 1);
                 this.updateHUD();
-                sfx.play('item');
+                audioManager.playSe('item');
                 this.triggerGuardFlash();
                 console.log(`[DEBUG] Guard added. Current: ${this.guardCharge}`);
             });
@@ -57,7 +57,7 @@ export class PlayScene extends SceneBase {
                 if (this.isGameOver) return;
                 this.bombStock = Math.min(BOMB_SETTINGS.maxStock, this.bombStock + 1);
                 this.updateHUD();
-                sfx.play('item');
+                audioManager.playSe('item');
                 console.log(`[DEBUG] Bomb added. Current: ${this.bombStock}`);
             });
         }
@@ -137,6 +137,28 @@ export class PlayScene extends SceneBase {
         } else {
             this.engine.backgroundManager.transitionTo(this.stage.id);
         }
+
+        // BGM再生
+        this.updateBgm();
+    }
+
+    /**
+     * ステージに応じたBGMを再生
+     */
+    updateBgm(fade = 0.3) {
+        const stageNum = this.currentStageIndex + 1;
+        let bgmKey = 'stage_03';
+        if (stageNum === 1) bgmKey = 'stage_01';
+        else if (stageNum === 2) bgmKey = 'stage_02';
+
+        audioManager.playBgm(bgmKey, { fade });
+    }
+
+    /**
+     * audioManager のアンロック時に、もしこのシーンにいればBGMを開始
+     */
+    onAudioUnlocked() {
+        this.updateBgm();
     }
 
     onExit() {
@@ -349,7 +371,7 @@ export class PlayScene extends SceneBase {
 
                     this.spawnParticles(entity.x, entity.y, entity.color);
                     entity.onHit(true); // 確実に死亡ステートへ遷移
-                    sfx.play('kill');
+                    audioManager.playSe('kill');
                 }
             });
 
@@ -602,11 +624,11 @@ export class PlayScene extends SceneBase {
 
                         // 音声再生（撃破）
                         if (result.isItem) {
-                            sfx.play('item');
+                            audioManager.playSe('item');
                         } else if (result.critical) {
-                            sfx.play('critical');
+                            audioManager.playSe('critical');
                         } else {
-                            sfx.play('kill');
+                            audioManager.playSe('kill');
                         }
 
                         // アイテム（回復）の場合
@@ -633,7 +655,7 @@ export class PlayScene extends SceneBase {
                     }
                 } else {
                     // 撃破していないヒット
-                    sfx.play('hit');
+                    audioManager.playSe('hit');
                 }
 
                 document.getElementById('debug-event').textContent = result.critical ? 'CRITICAL!' : 'HIT';
@@ -664,7 +686,7 @@ export class PlayScene extends SceneBase {
         // フィーバー中はガードを消費せずブロック（無制限）
         if (this.feverActive) {
             this.addPopup(pos.x, pos.y, "FEVER GUARD!", "5, 217, 232");
-            sfx.play('item');
+            audioManager.playSe('item');
             this.triggerGuardFlash();
             this.spawnGuardEffect(pos.x, pos.y);
             return;
@@ -674,7 +696,7 @@ export class PlayScene extends SceneBase {
         if (this.guardCharge > 0) {
             this.guardCharge--;
             this.addPopup(pos.x, pos.y, "GUARDED!", "5, 217, 232");
-            sfx.play('item');
+            audioManager.playSe('item');
 
             this.triggerGuardFlash();
 
@@ -689,7 +711,7 @@ export class PlayScene extends SceneBase {
         if (this.bombStock > 0) {
             this.bombStock--;
             this.addPopup(pos.x, pos.y, "BOMB BURST!", "255, 80, 80");
-            sfx.play('explosion'); // 適当な爆発音（なければ critical 等）
+            audioManager.playSe('explosion'); // 適当な爆発音（なければ critical 等）
 
             this.spawnShockwave(pos.x, pos.y);
             this.updateHUD();
@@ -714,7 +736,7 @@ export class PlayScene extends SceneBase {
         // MISS ポップアップ
         this.addPopup(pos.x, pos.y, "MISS", "255, 0, 0");
         document.getElementById('debug-event').textContent = 'MISS';
-        sfx.play('miss');
+        audioManager.playSe('miss');
     }
 
     checkFeverTrigger() {
@@ -739,7 +761,7 @@ export class PlayScene extends SceneBase {
         // UI表示
         this.feverOverlay.classList.add('active');
         this.feverAlert.classList.remove('hidden');
-        sfx.play('fever');
+        audioManager.playSe('fever');
 
         this.updateHUD();
     }
@@ -870,6 +892,9 @@ export class PlayScene extends SceneBase {
         this.flashTime = 0.5;
 
         this.engine.backgroundManager.transitionTo(this.stage.id);
+
+        // BGM切り替え
+        this.updateBgm(0.3);
     }
 
     gameOver() {

@@ -4,6 +4,7 @@
  */
 import { SceneBase } from './scene_base.js';
 import { sendGAEvent } from '../ga_util.js';
+import { audioManager } from '../audio_manager.js';
 
 export class TitleScene extends SceneBase {
     constructor(engine) {
@@ -12,6 +13,9 @@ export class TitleScene extends SceneBase {
         this.btnStart = document.getElementById('btn-start');
 
         this.btnStart.onclick = () => {
+            // SE再生 (アンロック済みのはず)
+            audioManager.playSe('select');
+
             // GA4 イベント送信: ゲーム開始
             sendGAEvent("game_start");
 
@@ -26,9 +30,19 @@ export class TitleScene extends SceneBase {
         // 背景設定 (タイトルは即時またはフェードなし)
         this.engine.backgroundManager.setTitle();
 
+        // BGM再生試行
+        audioManager.playBgm('opening');
+
         // ハイスコア表示等の更新（新キー優先で取得）
         const highScore = localStorage.getItem('energy_core_high_score') || localStorage.getItem('balloon_high_score') || 0;
         document.getElementById('high-score').textContent = `HIGH SCORE: ${highScore}`;
+    }
+
+    /**
+     * engine 側からアンロック完了時に呼ばれる（タイトルで待機中の場合）
+     */
+    onAudioUnlocked() {
+        audioManager.playBgm('opening');
     }
 
     onExit() {
