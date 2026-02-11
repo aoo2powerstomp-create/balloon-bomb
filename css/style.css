@@ -210,6 +210,71 @@ html {
     gap: 10px;
 }
 
+/* ガード表示 */
+#guard-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    transition: opacity 0.3s ease;
+    filter: drop-shadow(0 0 8px rgba(5, 217, 232, 0.6));
+}
+
+#guard-container.guard-empty {
+    opacity: 0.3;
+}
+
+.hud-icon-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hud-icon-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-top: -5px;
+    opacity: 0.9;
+}
+
+#guard-icon {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+#guard-count {
+    color: #05d9e8;
+    font-family: 'Oswald', sans-serif;
+    font-size: 44px;
+    font-weight: bold;
+    text-shadow: 0 0 15px rgba(5, 217, 232, 0.8);
+}
+
+/* ガード発動フラッシュ */
+.guard-flash {
+    animation: guard-pop-flash 0.3s ease-out;
+}
+
+@keyframes guard-pop-flash {
+    0% {
+        transform: scale(1);
+        filter: brightness(1) drop-shadow(0 0 5px #05d9e8);
+    }
+
+    50% {
+        transform: scale(1.3);
+        filter: brightness(2.5) drop-shadow(0 0 20px #05d9e8);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1) drop-shadow(0 0 5px #05d9e8);
+    }
+}
+
 #stage-display {
     display: flex;
     flex-direction: column;
@@ -458,7 +523,7 @@ html {
 
 /* Debug HUD */
 #debug-hud {
-    display: none;
+    display: block;
     /* 非表示に設定 */
     position: absolute;
     bottom: 50px;
@@ -564,6 +629,37 @@ html {
     pointer-events: none;
 }
 
+
+/* 
+ * BOMB UI - ガードUIと同様のサイズに揃える 
+ */
+#bomb-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 5px;
+    transition: opacity 0.3s ease;
+    filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.6));
+}
+
+#bomb-container.bomb-empty {
+    opacity: 0.3;
+}
+
+#bomb-icon {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+#bomb-count {
+    color: #ff4444;
+    font-family: 'Oswald', sans-serif;
+    font-size: 44px;
+    font-weight: bold;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+}
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
     #hud {
@@ -579,5 +675,28 @@ html {
     #stage-display {
         align-items: flex-end;
         padding-right: 5px;
+    }
+
+    /* アイコンと数字をPCの半分に */
+    #guard-icon,
+    #bomb-icon {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    #guard-count,
+    #bomb-count {
+        font-size: 22px !important;
+    }
+
+    .hud-icon-label {
+        font-size: 8px !important;
+        margin-top: -2px !important;
+    }
+
+    #guard-container,
+    #bomb-container {
+        gap: 6px !important;
+        margin-top: 5px !important;
     }
 }

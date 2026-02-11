@@ -83,6 +83,16 @@ class SoundManager {
                 osc.start(now);
                 osc.stop(now + 0.6);
                 break;
+            case 'explosion':
+                // 簡易爆発音: 低域への急降下
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.5);
+                gain.gain.setValueAtTime(0.2, now); // 音量を 0.5 -> 0.2 へ下げた
+                gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+                break;
             default:
                 return;
         }

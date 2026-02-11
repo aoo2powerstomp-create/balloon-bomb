@@ -30,6 +30,22 @@
             <div id="hud" class="hidden">
                 <div id="score-container" class="hud-column">
                     <div class="hud-item" id="score-display">SCORE: 000000</div>
+                    <!-- ガード表示 -->
+                    <div id="guard-container">
+                        <div class="hud-icon-wrapper">
+                            <img id="guard-icon" src="assets/ui/icons/icon_item_guard_hex.webp" alt="GUARD">
+                            <span class="hud-icon-label">GUARD</span>
+                        </div>
+                        <div id="guard-count">×0</div>
+                    </div>
+                    <!-- ボム表示 -->
+                    <div id="bomb-container">
+                        <div class="hud-icon-wrapper">
+                            <img id="bomb-icon" src="assets/ui/icons/icon_item_bomb_hex.webp" alt="BOMB">
+                            <span class="hud-icon-label">BOM</span>
+                        </div>
+                        <div id="bomb-count">×0</div>
+                    </div>
                 </div>
 
                 <div id="combo-container" class="hud-column">
@@ -90,13 +106,17 @@
 
 
         <!-- Debug HUD -->
-        <div id="debug-hud">
+        <div id="debug-hud" class="hidden">
             FPS: <span id="debug-fps">0</span><br>
             ALIVE: <span id="debug-alive">0</span><br>
             LAST EVENT: <span id="debug-event">NONE</span><br>
             SCENE: <span id="debug-scene">NONE</span><br>
             <button id="debug-fever-btn"
                 style="pointer-events: auto; cursor: pointer; margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #ff2a6d; color: white; border: none; border-radius: 3px;">FEVER-1</button>
+            <button id="debug-guard-btn"
+                style="pointer-events: auto; cursor: pointer; margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #05d9e8; color: black; border: none; border-radius: 3px;">GUARD+1</button>
+            <button id="debug-bomb-btn"
+                style="pointer-events: auto; cursor: pointer; margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #ff4444; color: white; border: none; border-radius: 3px;">BOMB+1</button>
         </div>
     </div>
 

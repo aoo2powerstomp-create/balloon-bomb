@@ -23,6 +23,19 @@ export const COMBO_SETTINGS = {
     tierThresholds: [5, 15, 30] // 倍率が上がるコンボ数
 };
 
+export const GUARD_SETTINGS = {
+    maxCharges: 5,
+    iconPath: 'assets/ui/icons/icon_item_guard_hex.webp'
+};
+
+export const BOMB_SETTINGS = {
+    maxStock: 3,
+    iconPath: 'assets/ui/icons/icon_item_bomb_hex.webp',
+    radiusRatio: 0.45, // 画面短辺の 45% (広範囲化)
+    durationMs: 350,   // 0.35秒で完結するように短縮
+    maxComboGain: 5
+};
+
 export const ENEMY_TYPES = {
     basic: {
         id: 'basic',

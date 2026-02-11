@@ -4,9 +4,10 @@
  */
 import { SceneBase } from './scene_base.js';
 import { EntityManager } from '../entity_manager.js';
-import { STAGES, GAME_SETTINGS, FEVER_SETTINGS, COMBO_SETTINGS } from '../config.js';
+import { STAGES, GAME_SETTINGS, FEVER_SETTINGS, COMBO_SETTINGS, GUARD_SETTINGS, BOMB_SETTINGS } from '../config.js';
 
 import { sfx } from '../sfx.js';
+import { sendGAEvent } from '../ga_util.js';
 
 export class PlayScene extends SceneBase {
     constructor(engine) {
@@ -36,7 +37,41 @@ export class PlayScene extends SceneBase {
             });
         }
 
+        const debugGuardBtn = document.getElementById('debug-guard-btn');
+        if (debugGuardBtn) {
+            debugGuardBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.isGameOver) return;
+                this.guardCharge = Math.min(GUARD_SETTINGS.maxCharges, this.guardCharge + 1);
+                this.updateHUD();
+                sfx.play('item');
+                this.triggerGuardFlash();
+                console.log(`[DEBUG] Guard added. Current: ${this.guardCharge}`);
+            });
+        }
+
+        const debugBombBtn = document.getElementById('debug-bomb-btn');
+        if (debugBombBtn) {
+            debugBombBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.isGameOver) return;
+                this.bombStock = Math.min(BOMB_SETTINGS.maxStock, this.bombStock + 1);
+                this.updateHUD();
+                sfx.play('item');
+                console.log(`[DEBUG] Bomb added. Current: ${this.bombStock}`);
+            });
+        }
+
         this.entityManager = new EntityManager(this);
+
+        // ガードアイコン画像のロード
+        this.guardIconImg = new Image();
+        this.guardIconImg.src = GUARD_SETTINGS.iconPath;
+
+        // ボムアイコン画像のロード
+        this.bombIconImg = new Image();
+        this.bombIconImg.src = BOMB_SETTINGS.iconPath;
+
         this.reset();
     }
 
@@ -50,6 +85,8 @@ export class PlayScene extends SceneBase {
         this.popups = [];
         this.particles = []; // パーティクル配列
         this.corePops = []; // コア放出エフェクト
+        this.guardEffects = []; // ガード発動エフェクト
+        this.shockwaves = []; // ボム衝撃波エフェクト
         this.shakeTimer = 0; // 画面揺れ
         this.isGameOver = false;
         this.isTransitioning = false;
@@ -81,6 +118,12 @@ export class PlayScene extends SceneBase {
             maxCombo: 0,
             feverCount: 0
         };
+
+        // ガードシステム
+        this.guardCharge = 0;
+
+        // ボムシステム
+        this.bombStock = 0;
     }
 
     onEnter(noFade = false) {
@@ -120,6 +163,30 @@ export class PlayScene extends SceneBase {
             hpEl.innerHTML = hpHtml;
         }
 
+        // ガードUI更新
+        const guardContainer = document.getElementById('guard-container');
+        const guardCountEl = document.getElementById('guard-count');
+        if (guardContainer && guardCountEl) {
+            guardCountEl.textContent = this.feverActive ? "INFINITE" : `×${this.guardCharge}`;
+
+            // フィーバー中は色を変える
+            if (this.feverActive) {
+                guardContainer.style.filter = 'drop-shadow(0 0 10px #ff2a6d)';
+                guardCountEl.style.color = '#ff2a6d';
+                guardContainer.classList.remove('guard-empty');
+            } else {
+                guardContainer.style.filter = 'drop-shadow(0 0 5px rgba(5, 217, 232, 0.5))';
+                guardCountEl.style.color = '#05d9e8';
+
+                // 0個の時は薄くする
+                if (this.guardCharge === 0) {
+                    guardContainer.classList.add('guard-empty');
+                } else {
+                    guardContainer.classList.remove('guard-empty');
+                }
+            }
+        }
+
         const stageNumEl = document.getElementById('stage-number');
         if (stageNumEl) {
             const currentStage = this.currentStageIndex + 1;
@@ -153,6 +220,19 @@ export class PlayScene extends SceneBase {
 
         // デバッグ情報
         document.getElementById('debug-alive').textContent = this.entityManager.entities.length;
+
+
+        // ボムUI更新
+        const bombCountEl = document.getElementById('bomb-count');
+        const bombContainer = document.getElementById('bomb-container');
+        if (bombCountEl && bombContainer) {
+            bombCountEl.textContent = `×${this.bombStock}`;
+            if (this.bombStock === 0) {
+                bombContainer.classList.add('bomb-empty');
+            } else {
+                bombContainer.classList.remove('bomb-empty');
+            }
+        }
     }
 
     update(delta) {
@@ -226,6 +306,54 @@ export class PlayScene extends SceneBase {
             p.vy += p.gravity;
             p.life -= delta * 1000;
             if (p.life <= 0) this.corePops.splice(i, 1);
+        }
+
+        // ガードエフェクトの更新
+        for (let i = this.guardEffects.length - 1; i >= 0; i--) {
+            const ge = this.guardEffects[i];
+            ge.life -= delta;
+            ge.scale += delta * 3.0; // 拡大速度を少しアップ
+            ge.rotation += ge.rotationSpeed * delta; // 回転更新
+            if (ge.life <= 0) this.guardEffects.splice(i, 1);
+        }
+
+        // 衝撃波の更新
+        for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+            const sw = this.shockwaves[i];
+            sw.life -= delta * 1000;
+            const t = 1.0 - sw.life / sw.maxLife; // 0.0 -> 1.0
+
+            // easeOutCubic: 1 - (1 - t)^3
+            const progress = 1 - Math.pow(1 - t, 3);
+            sw.currentRadius = sw.targetRadius * progress;
+
+            // 範囲内の敵を撃破
+            this.entityManager.entities.forEach(entity => {
+                if (entity.isDead || entity.isItem) return;
+
+                const dx = entity.x - sw.x;
+                const dy = entity.y - sw.y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq < sw.currentRadius * sw.currentRadius) {
+                    // ヒット！通常撃破
+                    const scoreBase = entity.config.score || 0;
+                    const gain = Math.floor(scoreBase * (this.feverActive ? FEVER_SETTINGS.scoreMultiplier : 1.0));
+                    this.score += gain;
+                    this.addPopup(entity.x, entity.y, gain.toString(), "255, 255, 255");
+
+                    // ボムによるコンボ加算は制限
+                    if (sw.comboGain < BOMB_SETTINGS.maxComboGain) {
+                        this.comboCount++;
+                        sw.comboGain++;
+                    }
+
+                    this.spawnParticles(entity.x, entity.y, entity.color);
+                    entity.onHit(true); // 確実に死亡ステートへ遷移
+                    sfx.play('kill');
+                }
+            });
+
+            if (sw.life <= 0) this.shockwaves.splice(i, 1);
         }
 
         // スポーン処理
@@ -311,6 +439,79 @@ export class PlayScene extends SceneBase {
                 ctx.beginPath();
                 ctx.arc(0, 0, p.radius * scale, 0, Math.PI * 2);
                 ctx.fill();
+            }
+            ctx.restore();
+        });
+
+        // 衝撃波の描画 (SFスタイル: 二重リング + 六角形フラグメント)
+        this.shockwaves.forEach(sw => {
+            const t = 1.0 - sw.life / sw.maxLife;
+            const alpha = Math.max(0, 1.0 - t);
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+
+            // 1. 外側リング (太く、徐々に細く消えていく)
+            ctx.beginPath();
+            ctx.arc(sw.x, sw.y, sw.currentRadius, 0, Math.PI * 2);
+            ctx.lineWidth = 20 * (1 - t * 0.8) * alpha;
+            ctx.strokeStyle = `rgba(0, 217, 232, ${alpha * 0.3})`; // シアン系
+            ctx.stroke();
+
+            // 2. 内側リング (鋭い白ハイライト)
+            ctx.beginPath();
+            ctx.arc(sw.x, sw.y, sw.currentRadius * 0.95, 0, Math.PI * 2);
+            ctx.lineWidth = 3 * alpha;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            ctx.stroke();
+
+            // 3. 六角形ひずみフラグメント
+            sw.fragments.forEach(f => {
+                const fragAlpha = alpha * 0.6;
+                const fragRadius = sw.currentRadius + f.distOffset * (1 + t);
+                const fx = sw.x + Math.cos(f.angle) * fragRadius;
+                const fy = sw.y + Math.sin(f.angle) * fragRadius;
+                const size = f.baseSize * (1 - t * 0.5) * alpha;
+
+                ctx.save();
+                ctx.translate(fx, fy);
+                ctx.rotate(f.rot + f.rotSpeed * t);
+
+                // 六角形の描画
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const ang = (i / 6) * Math.PI * 2;
+                    const px = Math.cos(ang) * size;
+                    const py = Math.sin(ang) * size;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = `rgba(0, 217, 232, ${fragAlpha})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            ctx.restore();
+        });
+
+        // ガードエフェクトの描画
+        this.guardEffects.forEach(ge => {
+            const alpha = ge.life / ge.maxLife;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.translate(ge.x, ge.y);
+            ctx.rotate(ge.rotation || 0); // 回転適用
+            ctx.scale(ge.scale, ge.scale);
+
+            // 外光
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#05d9e8";
+
+            const size = 120; // 基本サイズを拡大
+            if (this.guardIconImg && this.guardIconImg.complete) {
+                ctx.drawImage(this.guardIconImg, -size / 2, -size / 2, size, size);
             }
             ctx.restore();
         });
@@ -422,6 +623,13 @@ export class PlayScene extends SceneBase {
                         if (result.visualType === 'energy') {
                             this.spawnCorePop(result.x, result.y, result.id);
                         }
+
+                        // ボムストック加算（赤色ボーナス）
+                        if (result.id === 'bonus') {
+                            this.bombStock = Math.min(BOMB_SETTINGS.maxStock, this.bombStock + 1);
+                            console.log(`[BOMB] Stock added: ${this.bombStock}`);
+                            this.updateHUD();
+                        }
                     }
                 } else {
                     // 撃破していないヒット
@@ -453,6 +661,41 @@ export class PlayScene extends SceneBase {
     }
 
     handleMiss(pos) {
+        // フィーバー中はガードを消費せずブロック（無制限）
+        if (this.feverActive) {
+            this.addPopup(pos.x, pos.y, "FEVER GUARD!", "5, 217, 232");
+            sfx.play('item');
+            this.triggerGuardFlash();
+            this.spawnGuardEffect(pos.x, pos.y);
+            return;
+        }
+
+        // ガードチャージによるブロック
+        if (this.guardCharge > 0) {
+            this.guardCharge--;
+            this.addPopup(pos.x, pos.y, "GUARDED!", "5, 217, 232");
+            sfx.play('item');
+
+            this.triggerGuardFlash();
+
+            // GA送信: ガード発動
+            sendGAEvent("item_guard_blocked", { charge: this.guardCharge });
+
+            this.updateHUD();
+            return;
+        }
+
+        // ボムによるブロック（衝撃波）
+        if (this.bombStock > 0) {
+            this.bombStock--;
+            this.addPopup(pos.x, pos.y, "BOMB BURST!", "255, 80, 80");
+            sfx.play('explosion'); // 適当な爆発音（なければ critical 等）
+
+            this.spawnShockwave(pos.x, pos.y);
+            this.updateHUD();
+            return;
+        }
+
         this.stats.missTaps++; // ミス数
 
         // クールダウン中は無視
@@ -489,10 +732,16 @@ export class PlayScene extends SceneBase {
         this.lastFeverCombo = this.comboCount;
         this.stats.feverCount++; // 統計: フィーバー回数
 
+        // ガード付与（最大まで補充）
+        this.guardCharge = GUARD_SETTINGS.maxCharges;
+        sendGAEvent("item_guard_granted", { charge: this.guardCharge });
+
         // UI表示
         this.feverOverlay.classList.add('active');
         this.feverAlert.classList.remove('hidden');
         sfx.play('fever');
+
+        this.updateHUD();
     }
 
     stopFever() {
@@ -565,21 +814,69 @@ export class PlayScene extends SceneBase {
         }
     }
 
+    triggerGuardFlash() {
+        const guardContainer = document.getElementById('guard-container');
+        if (guardContainer) {
+            guardContainer.classList.remove('guard-flash');
+            void guardContainer.offsetWidth; // Reflow
+            guardContainer.classList.add('guard-flash');
+        }
+    }
+
+    spawnGuardEffect(x, y) {
+        this.guardEffects.push({
+            x: x,
+            y: y,
+            life: 0.5,
+            maxLife: 0.5,
+            scale: 0.6,
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed: (Math.random() > 0.5 ? 1 : -1) * (2.0 + Math.random() * 2.0)
+        });
+    }
+
+    spawnShockwave(x, y) {
+        const shortSide = Math.min(window.innerWidth, window.innerHeight);
+        const radius = shortSide * BOMB_SETTINGS.radiusRatio;
+
+        const fragments = [];
+        const fragCount = 12 + Math.floor(Math.random() * 7); // 12-18 fragments
+        for (let i = 0; i < fragCount; i++) {
+            const angle = (i / fragCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+            fragments.push({
+                angle: angle,
+                baseSize: 10 + Math.random() * 15,
+                rot: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 4,
+                distOffset: Math.random() * 30 - 15
+            });
+        }
+
+        this.shockwaves.push({
+            x: x,
+            y: y,
+            life: BOMB_SETTINGS.durationMs,
+            maxLife: BOMB_SETTINGS.durationMs,
+            targetRadius: radius,
+            currentRadius: 0,
+            comboGain: 0,
+            fragments: fragments
+        });
+    }
+
     nextStage() {
         this.currentStageIndex++;
         this.stage = STAGES[this.currentStageIndex];
-        this.flashTime = 0.5; // ステージアップ演出のみ
+        this.flashTime = 0.5;
 
-        // 背景クロスフェード切り替え
         this.engine.backgroundManager.transitionTo(this.stage.id);
     }
 
     gameOver() {
         if (this.isGameOver) return;
         this.isGameOver = true;
-        this.gameOverTimer = 3000; // 3秒待機
+        this.gameOverTimer = 3000;
 
-        // プレイ時間を確定
         this.playTimeSeconds = Math.floor((Date.now() - this.startTime) / 1000);
     }
 
@@ -589,16 +886,14 @@ export class PlayScene extends SceneBase {
             return;
         }
         this.hp -= amount;
-        this.flashTime = 1.0; // 被弾フラッシュ設定
+        this.flashTime = 1.0;
 
-        // HP表示にエフェクトを掛ける
         this.hpDisplay.classList.remove('hp-damage');
-        void this.hpDisplay.offsetWidth; // reflow
+        void this.hpDisplay.offsetWidth;
         this.hpDisplay.classList.add('hp-damage');
 
-        // 一定時間後にクラスを削除（色が戻らない問題の対策）
         setTimeout(() => {
-            this.hpDisplay.classList.remove('hp-damage');
+            if (this.hpDisplay) this.hpDisplay.classList.remove('hp-damage');
         }, 400);
 
         document.getElementById('debug-event').textContent = 'EXPLODE!';
