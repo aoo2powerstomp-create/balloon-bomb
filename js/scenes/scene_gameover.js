@@ -42,6 +42,20 @@ export class GameOverScene extends SceneBase {
         const title = this.calculateTitle(finalScore, stats);
         document.getElementById('player-title').textContent = `称号: ${title}`;
 
+        // GA4 イベント送信: ゲームオーバー
+        try {
+            if (typeof gtag === 'function') {
+                gtag('event', 'game_over', {
+                    score: Number(finalScore),
+                    stage: Number(playScene.currentStageIndex + 1),
+                    taps: Number(stats.totalTaps),
+                    max_combo: Number(stats.maxCombo)
+                });
+            }
+        } catch (e) {
+            console.warn("GA4 event failed (game_over):", e);
+        }
+
         // ハイスコア更新チェック
         const oldKey = 'balloon_high_score';
         const newKey = 'energy_core_high_score';

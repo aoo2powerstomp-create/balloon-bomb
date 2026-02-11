@@ -11,6 +11,18 @@ export class TitleScene extends SceneBase {
         this.btnStart = document.getElementById('btn-start');
 
         this.btnStart.onclick = () => {
+            // GA4 イベント送信: ゲーム開始
+            try {
+                const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+                if (typeof gtag === 'function') {
+                    gtag('event', 'game_start', {
+                        device: isMobile ? 'mobile' : 'pc'
+                    });
+                }
+            } catch (e) {
+                console.warn("GA4 event failed (game_start):", e);
+            }
+
             this.engine.changeScene('PLAY');
         };
     }
