@@ -3,6 +3,7 @@
  * ゲームオーバー画面シーン
  */
 import { SceneBase } from './scene_base.js';
+import { sendGAEvent } from '../ga_util.js';
 
 export class GameOverScene extends SceneBase {
     constructor(engine) {
@@ -43,18 +44,12 @@ export class GameOverScene extends SceneBase {
         document.getElementById('player-title').textContent = `称号: ${title}`;
 
         // GA4 イベント送信: ゲームオーバー
-        try {
-            if (typeof gtag === 'function') {
-                gtag('event', 'game_over', {
-                    score: Number(finalScore),
-                    stage: Number(playScene.currentStageIndex + 1),
-                    taps: Number(stats.totalTaps),
-                    max_combo: Number(stats.maxCombo)
-                });
-            }
-        } catch (e) {
-            console.warn("GA4 event failed (game_over):", e);
-        }
+        sendGAEvent("game_over", {
+            score: Number(finalScore),
+            play_time: Number(playScene.playTimeSeconds || 0),
+            stage: Number(playScene.currentStageIndex + 1),
+            taps: Number(stats.totalTaps)
+        });
 
         // ハイスコア更新チェック
         const oldKey = 'balloon_high_score';

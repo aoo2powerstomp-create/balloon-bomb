@@ -69,6 +69,10 @@ export class PlayScene extends SceneBase {
         this.lastUpdateTime = 0;
         this.lastStageIndex = -1; // ステージ変更検知用
 
+        // プレイ時間計測用
+        this.startTime = Date.now();
+        this.playTimeSeconds = 0;
+
         // プレイ統計トラッキング
         this.stats = {
             totalTaps: 0,
@@ -574,7 +578,9 @@ export class PlayScene extends SceneBase {
         if (this.isGameOver) return;
         this.isGameOver = true;
         this.gameOverTimer = 3000; // 3秒待機
-        console.log("[GAME OVER] Starting delay... results in 3s");
+
+        // プレイ時間を確定
+        this.playTimeSeconds = Math.floor((Date.now() - this.startTime) / 1000);
     }
 
     takeDamage(amount) {

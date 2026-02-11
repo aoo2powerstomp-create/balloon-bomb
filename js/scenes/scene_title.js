@@ -3,6 +3,7 @@
  * タイトル画面シーン
  */
 import { SceneBase } from './scene_base.js';
+import { sendGAEvent } from '../ga_util.js';
 
 export class TitleScene extends SceneBase {
     constructor(engine) {
@@ -12,16 +13,7 @@ export class TitleScene extends SceneBase {
 
         this.btnStart.onclick = () => {
             // GA4 イベント送信: ゲーム開始
-            try {
-                const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-                if (typeof gtag === 'function') {
-                    gtag('event', 'game_start', {
-                        device: isMobile ? 'mobile' : 'pc'
-                    });
-                }
-            } catch (e) {
-                console.warn("GA4 event failed (game_start):", e);
-            }
+            sendGAEvent("game_start");
 
             this.engine.changeScene('PLAY');
         };
